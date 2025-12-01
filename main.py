@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from routes import email, sms, chat, voice
 
 app = FastAPI()
-app.include_router(email.router, prefix="/email")
+app.include_router(email.router, prefix="/email", tags=["Email"])
 app.include_router(sms.router, prefix="/sms", tags=["SMS"])
 app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 app.include_router(voice.router, prefix="/voice", tags=["Voice"])

@@ -8,9 +8,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from database import Base
 
-# -------------------------
+
 # TENANT (Client / Organization)
-# -------------------------
 class Tenant(Base):
     __tablename__ = "tenants"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -38,10 +37,7 @@ class Tenant(Base):
     users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     voice_messages = relationship("VoiceMessage", back_populates="tenant", cascade="all, delete-orphan")
 
-
-# -------------------------
 # USER (Tenant admins / operators)
-# -------------------------
 class User(Base):
     __tablename__ = "users"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -58,9 +54,8 @@ class User(Base):
     tenant = relationship("Tenant", back_populates="users")
 
 
-# -------------------------
 # CHANNELS (per-tenant identities: phone/email/chat)
-# -------------------------
+
 class Channel(Base):
     __tablename__ = "channels"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -69,7 +64,6 @@ class Channel(Base):
     identifier = Column(String(255), nullable=False)
     description = Column(String(255), nullable=True)
     status = Column(String(50), default="active")
-    channel_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -80,26 +74,21 @@ class Channel(Base):
     __table_args__ = (UniqueConstraint('tenant_id', 'type', 'identifier', name='uq_tenant_type_identifier'),)
 
 
-# -------------------------
 # MESSAGES (single table for all channels)
-# -------------------------
 class Message(Base):
     __tablename__ = "messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     channel_id = Column(UUID(as_uuid=True), ForeignKey("channels.id"), nullable=False)
-    session_id = Column(String(255), nullable=True)
-    from_contact = Column(String(255), nullable=True)
-    to_contact = Column(String(255), nullable=True)
     direction = Column(String(10), default="incoming")
     message_text = Column(Text, nullable=True)
     ai_response = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
-    provider = Column(String(50), nullable=True)
-    message_metadata = Column(JSON, nullable=True)
     status = Column(String(50), default="pending")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    escalated_to_human = Column(Boolean, default=False)
+    customer_contact = Column(String(255), nullable=True)
 
     tenant = relationship("Tenant", back_populates="messages")
     channel = relationship("Channel", back_populates="messages")
@@ -107,9 +96,8 @@ class Message(Base):
     voice_message = relationship("VoiceMessage", back_populates="message", uselist=False)
 
 
-# -------------------------
 # KNOWLEDGE BASE
-# -------------------------
+
 class KnowledgeBase(Base):
     __tablename__ = "knowledge_base"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -125,9 +113,7 @@ class KnowledgeBase(Base):
     tenant = relationship("Tenant", back_populates="knowledge_base")
 
 
-# -------------------------
 # ESCALATIONS
-# -------------------------
 class Escalation(Base):
     __tablename__ = "escalations"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -145,9 +131,7 @@ class Escalation(Base):
     tenant = relationship("Tenant", back_populates="escalations")
 
 
-# -------------------------
 # VOICE MESSAGES
-# -------------------------
 class VoiceMessage(Base):
     __tablename__ = "voice_messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -158,7 +142,6 @@ class VoiceMessage(Base):
     transcription = Column(Text, nullable=True)
     ai_response = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
-    voice_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -167,9 +150,7 @@ class VoiceMessage(Base):
     message = relationship("Message", back_populates="voice_message")
 
 
-# -------------------------
 # ANALYTICS
-# -------------------------
 class Analytics(Base):
     __tablename__ = "analytics"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -178,7 +159,6 @@ class Analytics(Base):
     total_messages = Column(Integer, default=0)
     ai_resolved = Column(Integer, default=0)
     escalated = Column(Integer, default=0)
-    analytics_metadata = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
