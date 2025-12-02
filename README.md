@@ -47,10 +47,10 @@ Each business/user can configure:
 | Component | Technology |
 |----------|------------|
 | Backend Framework | **FastAPI** |
-| Database | **PostgreSQL** + SQLAlchemy ORM |
-| AI Providers | **OpenAI, Gemini, DeepSeek, Groq** (extensible) |
+| Database | **PostgreSQL(Neon DB)** + SQLAlchemy ORM |
+| AI Providers | **OpenAI, Gemini** (extensible) |
 | Telephony | **Twilio Voice + Twilio SMS** |
-| Response Voice | **Amazon Polly Voices via Twilio `<Say voice="">`** |
+| Response Voice | **Amazon Polly Voices via Twilio** |
 | Server Tunneling | ngrok (development only) |
 | Deployment | Docker / Railway / Render / VPS |
 

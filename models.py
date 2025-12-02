@@ -93,7 +93,6 @@ class Message(Base):
     tenant = relationship("Tenant", back_populates="messages")
     channel = relationship("Channel", back_populates="messages")
     escalation = relationship("Escalation", back_populates="message", uselist=False)
-    voice_message = relationship("VoiceMessage", back_populates="message", uselist=False)
 
 
 # KNOWLEDGE BASE
@@ -135,7 +134,6 @@ class Escalation(Base):
 class VoiceMessage(Base):
     __tablename__ = "voice_messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=True)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     channel_id = Column(UUID(as_uuid=True), ForeignKey("channels.id"), nullable=False)
     from_contact = Column(String(255), nullable=True)
@@ -147,7 +145,6 @@ class VoiceMessage(Base):
 
     tenant = relationship("Tenant", back_populates="voice_messages")
     channel = relationship("Channel", back_populates="voice_messages")
-    message = relationship("Message", back_populates="voice_message")
 
 
 # ANALYTICS
