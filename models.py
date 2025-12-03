@@ -160,3 +160,25 @@ class Analytics(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     tenant = relationship("Tenant", back_populates="analytics")
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
+    channel_id = Column(UUID(as_uuid=True), ForeignKey("channels.id"), nullable=True)
+    customer_name = Column(String(255), nullable=True)
+    customer_contact = Column(String(255), nullable=True)  # phone or email
+    service = Column(String(255), nullable=True)  # optional, based on tenant services
+    requested_time = Column(DateTime, nullable=True)  # what customer requested
+    confirmed_time = Column(DateTime, nullable=True)  # final confirmed date/time
+    status = Column(String(50), default="pending")  # pending, confirmed, canceled, completed
+    ai_conversation = Column(JSON, nullable=True)  # store multi-turn AI conversation if needed
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    notes = Column(Text, nullable=True)  # optional notes from AI or tenant
+
+    # relationships
+    tenant = relationship("Tenant", back_populates="appointments")
+    channel = relationship("Channel")
+    Tenant.appointments = relationship("Appointment", back_populates="tenant", cascade="all, delete-orphan")
