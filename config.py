@@ -1,6 +1,8 @@
 # config.py
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Optional
+
 
 class Settings(BaseSettings):
     # Database
@@ -15,6 +17,7 @@ class Settings(BaseSettings):
     # Twilio (for outgoing actions if needed)
     TWILIO_ACCOUNT_SID: Optional[str] = Field(None, env="TWILIO_ACCOUNT_SID")
     TWILIO_AUTH_TOKEN: Optional[str] = Field(None, env="TWILIO_AUTH_TOKEN")
+    TWILIO_PHONE_NUMBER: Optional[str] = Field(None, env="TWILIO_PHONE_NUMBER")
 
     # Host config
     API_HOST: str = "0.0.0.0"
@@ -31,5 +34,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+
 
 settings = Settings()

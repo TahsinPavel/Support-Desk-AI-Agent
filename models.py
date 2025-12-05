@@ -12,56 +12,57 @@ from database import Base
 # TENANT (Client / Organization)
 class Tenant(Base):
     __tablename__ = "tenants"
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    name = Column(String(255), nullable=False)
+
+    # Login credentials
+    owner_name = Column(String(255), nullable=True)
+    email = Column(String(255), unique=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+
+    # Business info
+    business_name = Column(String(255), nullable=False)
     primary_phone = Column(String(50), nullable=True, unique=True)
     support_email = Column(String(255), nullable=True)
     timezone = Column(String(50), default="UTC")
     open_time = Column(String(10), nullable=True)
     close_time = Column(String(10), nullable=True)
+
+    # AI settings
     ai_provider = Column(String(50), default="openai")
     ai_system_prompt = Column(Text, nullable=True)
     faqs = Column(JSON, nullable=True)
     services = Column(JSON, nullable=True)
     escalation_phone = Column(String(50), nullable=True)
+
+    # Subscription
+    plan = Column(String(50), default="starter")  # starter/growth/enterprise
+    subscription_status = Column(String(50), default="active")
+    paddle_customer_id = Column(String(255), nullable=True)
+    paddle_subscription_id = Column(String(255), nullable=True)
+
+    # Metadata
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # relationships
+    # Relationships
     channels = relationship("Channel", back_populates="tenant", cascade="all, delete-orphan")
     knowledge_base = relationship("KnowledgeBase", back_populates="tenant", cascade="all, delete-orphan")
     messages = relationship("Message", back_populates="tenant", cascade="all, delete-orphan")
     escalations = relationship("Escalation", back_populates="tenant", cascade="all, delete-orphan")
     analytics = relationship("Analytics", back_populates="tenant", cascade="all, delete-orphan")
-    users = relationship("User", back_populates="tenant", cascade="all, delete-orphan")
     voice_messages = relationship("VoiceMessage", back_populates="tenant", cascade="all, delete-orphan")
-
-# USER (Tenant admins / operators)
-class User(Base):
-    __tablename__ = "users"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=True)
-    email = Column(String(255), unique=True, nullable=False)
-    name = Column(String(255), nullable=True)
-    phone = Column(String(50), nullable=True)
-    hashed_password = Column(String(255), nullable=True)
-    is_admin = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    tenant = relationship("Tenant", back_populates="users")
+    appointments = relationship("Appointment", back_populates="tenant", cascade="all, delete-orphan")
 
 
 # CHANNELS (per-tenant identities: phone/email/chat)
-
 class Channel(Base):
     __tablename__ = "channels"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    type = Column(String(50), nullable=False)
-    identifier = Column(String(255), nullable=False)
+    type = Column(String(50), nullable=False)  # sms, email, voice, chat
+    identifier = Column(String(255), nullable=False)  # phone number, email address, etc.
     description = Column(String(255), nullable=True)
     status = Column(String(50), default="active")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -70,67 +71,33 @@ class Channel(Base):
     tenant = relationship("Tenant", back_populates="channels")
     messages = relationship("Message", back_populates="channel", cascade="all, delete-orphan")
     voice_messages = relationship("VoiceMessage", back_populates="channel", cascade="all, delete-orphan")
+    appointments = relationship("Appointment", back_populates="channel", cascade="all, delete-orphan")
 
     __table_args__ = (UniqueConstraint('tenant_id', 'type', 'identifier', name='uq_tenant_type_identifier'),)
 
 
-# MESSAGES (single table for all channels)
+# MESSAGES (single table for all channels: SMS, email, chat)
 class Message(Base):
     __tablename__ = "messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     channel_id = Column(UUID(as_uuid=True), ForeignKey("channels.id"), nullable=False)
-    direction = Column(String(10), default="incoming")
+    direction = Column(String(10), default="incoming")  # incoming, outgoing
     message_text = Column(Text, nullable=True)
     ai_response = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
-    status = Column(String(50), default="pending")
+    status = Column(String(50), default="pending")  # pending, processed, failed
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     escalated_to_human = Column(Boolean, default=False)
-    customer_contact = Column(String(255), nullable=True)
+    customer_contact = Column(String(255), nullable=True)  # phone number, email, etc.
 
     tenant = relationship("Tenant", back_populates="messages")
     channel = relationship("Channel", back_populates="messages")
-    escalation = relationship("Escalation", back_populates="message", uselist=False)
+    escalation = relationship("Escalation", back_populates="message", uselist=False, cascade="all, delete-orphan")
 
 
-# KNOWLEDGE BASE
-
-class KnowledgeBase(Base):
-    __tablename__ = "knowledge_base"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    title = Column(String(255), nullable=False)
-    content = Column(Text, nullable=False)
-    source_type = Column(String(50), default="manual")
-    source_link = Column(String(255), nullable=True)
-    embedding = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    tenant = relationship("Tenant", back_populates="knowledge_base")
-
-
-# ESCALATIONS
-class Escalation(Base):
-    __tablename__ = "escalations"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False)
-    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    escalated_to = Column(String(255), nullable=False)
-    reason = Column(String(255), nullable=True)
-    resolved = Column(Boolean, default=False)
-    resolved_at = Column(DateTime, nullable=True)
-    notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    message = relationship("Message", back_populates="escalation")
-    tenant = relationship("Tenant", back_populates="escalations")
-
-
-# VOICE MESSAGES
+# VOICE MESSAGES (for inbound calls transcribed)
 class VoiceMessage(Base):
     __tablename__ = "voice_messages"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -147,12 +114,46 @@ class VoiceMessage(Base):
     channel = relationship("Channel", back_populates="voice_messages")
 
 
-# ANALYTICS
+# KNOWLEDGE BASE (per-tenant documents with embedding JSON)
+class KnowledgeBase(Base):
+    __tablename__ = "knowledge_base"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    source_type = Column(String(50), default="manual")  # manual, url, document
+    source_link = Column(String(255), nullable=True)
+    embedding = Column(JSON, nullable=True)  # vector embeddings for similarity search
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    tenant = relationship("Tenant", back_populates="knowledge_base")
+
+
+# ESCALATIONS (when AI escalates to human)
+class Escalation(Base):
+    __tablename__ = "escalations"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    message_id = Column(UUID(as_uuid=True), ForeignKey("messages.id"), nullable=False)
+    tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
+    escalated_to = Column(String(255), nullable=False)  # phone number, email, etc.
+    reason = Column(String(255), nullable=True)
+    resolved = Column(Boolean, default=False)
+    resolved_at = Column(DateTime, nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    message = relationship("Message", back_populates="escalation")
+    tenant = relationship("Tenant", back_populates="escalations")
+
+
+# ANALYTICS (monthly/weekly/daily message summary)
 class Analytics(Base):
     __tablename__ = "analytics"
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
-    period_start = Column(DateTime, default=datetime.utcnow)
+    period_start = Column(DateTime, nullable=False)
     total_messages = Column(Integer, default=0)
     ai_resolved = Column(Integer, default=0)
     escalated = Column(Integer, default=0)
@@ -161,9 +162,10 @@ class Analytics(Base):
 
     tenant = relationship("Tenant", back_populates="analytics")
 
+
+# APPOINTMENT (appointment booking flows created by AI)
 class Appointment(Base):
     __tablename__ = "appointments"
-    
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     channel_id = Column(UUID(as_uuid=True), ForeignKey("channels.id"), nullable=True)
@@ -180,5 +182,4 @@ class Appointment(Base):
 
     # relationships
     tenant = relationship("Tenant", back_populates="appointments")
-    channel = relationship("Channel")
-    Tenant.appointments = relationship("Appointment", back_populates="tenant", cascade="all, delete-orphan")
+    channel = relationship("Channel", back_populates="appointments")

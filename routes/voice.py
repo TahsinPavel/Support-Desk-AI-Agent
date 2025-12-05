@@ -25,7 +25,6 @@ async def voice_webhook(request: Request):
 
     # Find voice channel
     channel = db.query(Channel).filter(Channel.type=="voice", Channel.identifier==to_number).first()
-    # channel = db.query(Channel).filter(Channel.user_id == tenant.id, Channel.type=="voice").first()
     if not channel:
         raise HTTPException(status_code=404, detail="Voice channel not found")
 
@@ -38,7 +37,7 @@ async def voice_webhook(request: Request):
     if not speech_text:
         twilio_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Say voice="Polly.Joanna">Hello! This is {tenant.name}. How can I help you today?</Say>
+    <Say voice="Polly.Joanna">Hello! This is {tenant.business_name}. How can I help you today?</Say>
     <Gather input="speech" action="/voice/receive" method="POST" speechTimeout="auto"/>
 </Response>"""
         return Response(content=twilio_response, media_type="application/xml")
