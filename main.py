@@ -1,16 +1,19 @@
 from fastapi import FastAPI
-from routes import email, sms, chat, voice, voice_logs, analytics, appointments
+from routes import email, sms, chat, voice, voice_logs, analytics, appointments, subscription
 from auth import routes as auth_routes
 
 app = FastAPI()
-app.include_router(auth_routes.router)
-app.include_router(email.router, prefix="/email", tags=["Email"])
-app.include_router(sms.router, prefix="/sms", tags=["SMS"])
-app.include_router(chat.router, prefix="/chat", tags=["Chat"])
-app.include_router(voice.router, prefix="/voice", tags=["Voice"])
-app.include_router(voice_logs.router, prefix="/voice", tags=["Voice Logs"])
-app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
-app.include_router(appointments.router, prefix="/appointments", tags=["Appointments"])
+
+# Include all routers with /api prefix
+app.include_router(auth_routes.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(email.router, prefix="/api/email", tags=["Email"])
+app.include_router(sms.router, prefix="/api/sms", tags=["SMS"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(voice.router, prefix="/api/voice", tags=["Voice"])
+app.include_router(voice_logs.router, prefix="/api/voice_logs", tags=["Voice Logs"])
+app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
+app.include_router(appointments.router, prefix="/api/appointments", tags=["Appointments"])
+app.include_router(subscription.router, prefix="/api/subscription", tags=["Subscription"])
 
 @app.get("/")
 def home():

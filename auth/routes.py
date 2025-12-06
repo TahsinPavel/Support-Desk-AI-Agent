@@ -9,7 +9,7 @@ from auth import dependencies
 from datetime import timedelta
 import uuid
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(tags=["Authentication"])
 
 # Token expiration times
 ACCESS_TOKEN_EXPIRE_MINUTES = 60

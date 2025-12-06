@@ -38,7 +38,7 @@ async def voice_webhook(request: Request):
         twilio_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">Hello! This is {tenant.business_name}. How can I help you today?</Say>
-    <Gather input="speech" action="/voice/receive" method="POST" speechTimeout="auto"/>
+    <Gather input="speech" action="/api/voice/receive" method="POST" speechTimeout="auto"/>
 </Response>"""
         return Response(content=twilio_response, media_type="application/xml")
 
@@ -70,7 +70,7 @@ async def voice_webhook(request: Request):
     twilio_response = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
     <Say voice="Polly.Joanna">{ai_reply}</Say>
-    <Gather input="speech" action="/voice/receive" method="POST" speechTimeout="auto"/>
+    <Gather input="speech" action="/api/voice/receive" method="POST" speechTimeout="auto"/>
 </Response>"""
 
     return Response(content=twilio_response, media_type="application/xml")

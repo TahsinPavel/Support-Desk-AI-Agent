@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: Optional[str] = Field(None, env="TWILIO_ACCOUNT_SID")
     TWILIO_AUTH_TOKEN: Optional[str] = Field(None, env="TWILIO_AUTH_TOKEN")
     TWILIO_PHONE_NUMBER: Optional[str] = Field(None, env="TWILIO_PHONE_NUMBER")
+    
+    # Paddle
+    PADDLE_WEBHOOK_SECRET: Optional[str] = Field(None, env="PADDLE_WEBHOOK_SECRET")
 
     # Host config
     API_HOST: str = "0.0.0.0"
