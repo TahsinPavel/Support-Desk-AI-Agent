@@ -25,7 +25,7 @@ router = APIRouter()
 def get_or_create_email_channel(db: Session, tenant: Tenant) -> Channel:
     """
     Get existing email channel for tenant, or create one if it doesn't exist.
-    Uses tenant.support_email or falls back to default.
+    Uses a default email pattern based on business name.
     """
     channel = db.query(Channel).filter(
         Channel.tenant_id == tenant.id,
@@ -34,7 +34,7 @@ def get_or_create_email_channel(db: Session, tenant: Tenant) -> Channel:
 
     if not channel:
         # Auto-create email channel
-        email_identifier = tenant.support_email or f"support@{tenant.business_name.lower().replace(' ', '')}.com"
+        email_identifier = f"support@{tenant.business_name.lower().replace(' ', '')}.com"
         channel = Channel(
             id=uuid.uuid4(),
             tenant_id=tenant.id,

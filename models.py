@@ -23,7 +23,6 @@ class Tenant(Base):
     # Business info
     business_name = Column(String(255), nullable=False)
     primary_phone = Column(String(50), nullable=True, unique=True)
-    support_email = Column(String(255), nullable=True)
     timezone = Column(String(50), default="UTC")
     open_time = Column(String(10), nullable=True)
     close_time = Column(String(10), nullable=True)
@@ -43,6 +42,7 @@ class Tenant(Base):
 
     # Metadata
     is_active = Column(Boolean, default=True)
+    onboarding_completed = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
