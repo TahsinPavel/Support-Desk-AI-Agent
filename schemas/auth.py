@@ -5,7 +5,6 @@ import uuid
 
 
 class TenantSignupRequest(BaseModel):
-    owner_name: Optional[str] = None
     business_name: str
     email: str
     password: str
@@ -20,7 +19,6 @@ class TenantLoginRequest(BaseModel):
 
 class TenantResponse(BaseModel):
     id: uuid.UUID
-    owner_name: Optional[str] = None
     business_name: str
     email: str
     primary_phone: Optional[str] = None

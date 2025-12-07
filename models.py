@@ -16,7 +16,6 @@ class Tenant(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # Login credentials
-    owner_name = Column(String(255), nullable=True)
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
 
