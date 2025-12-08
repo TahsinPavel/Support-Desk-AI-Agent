@@ -1,23 +1,24 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/togstec/backend:$COMMIT_SHA', '.']
+    args: [
+      'build',
+      '-t',
+      'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA',
+      '.'
+    ]
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/togstec/backend:$COMMIT_SHA']
+    args: [
+      'push',
+      'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA'
+    ]
 
   - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      [
-        'run',
-        'deploy',
-        'togstec-backend',
-        '--image',
-        'us-central1-docker.pkg.dev/$PROJECT_ID/togstec/backend:$COMMIT_SHA',
-        '--region',
-        'us-central1',
-        '--platform',
-        'managed',
-        '--allow-unauthenticated',
-        '--set-secrets',
-        'DATABASE_URL=projects/$PROJECT_ID/secrets/NEON_DATABASE_URL:latest',
-      ]
+    args: [
+      'run', 'deploy', 'togstec-backend',
+      '--image', 'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA',
+      '--region', 'us-central1',
+      '--platform', 'managed',
+      '--allow-unauthenticated',
+      '--set-secrets', 'DATABASE_URL=projects/togstec-ai/secrets/NEON_DATABASE_URL:latest'
+    ]
