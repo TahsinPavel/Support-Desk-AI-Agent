@@ -19,7 +19,6 @@ def get_basic_analytics(
 ):
     """
     Get basic analytics for the authenticated tenant.
-    Returns aggregated statistics for messages, voice calls, and channels.
     """
     try:
         tenant_id = current_tenant.id
