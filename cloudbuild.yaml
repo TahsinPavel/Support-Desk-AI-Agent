@@ -36,6 +36,5 @@ steps:
         '--allow-unauthenticated',
         '--port', '8080',
         '--set-secrets',
-        'DATABASE_URL=projects/togstec-ai/secrets/NEON_DATABASE_URL:latest'
+        'DATABASE_URL=NEON_DATABASE_URL:latest'
       ]
-
