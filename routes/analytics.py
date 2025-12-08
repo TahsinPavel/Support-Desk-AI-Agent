@@ -23,34 +23,24 @@ def get_basic_analytics(
     """
     try:
         tenant_id = current_tenant.id
-
-        # ==========================================
         # 1. Total Messages (all channels)
-        # ==========================================
         total_messages = db.query(func.count(Message.id)).filter(
             Message.tenant_id == tenant_id
         ).scalar() or 0
 
-        # ==========================================
         # 2. AI Resolved: status='replied' OR escalated_to_human=False
-        # ==========================================
         ai_resolved = db.query(func.count(Message.id)).filter(
             Message.tenant_id == tenant_id,
             (Message.status == 'replied') | (Message.escalated_to_human == False)
         ).scalar() or 0
 
-        # ==========================================
         # 3. Escalated count
-        # ==========================================
         escalated = db.query(func.count(Message.id)).filter(
             Message.tenant_id == tenant_id,
             Message.escalated_to_human == True
         ).scalar() or 0
 
-        # ==========================================
-        # 4. Count by channel type (sms, email, chat)
-        # ==========================================
-        # Get all channels for this tenant
+        # 4.Get all channels for this tenant
         channels = db.query(Channel).filter(
             Channel.tenant_id == tenant_id
         ).all()
@@ -88,16 +78,12 @@ def get_basic_analytics(
                 Message.channel_id.in_(channel_type_map["chat"])
             ).scalar() or 0
 
-        # ==========================================
         # 5. Voice count from voice_messages table
-        # ==========================================
         voice_count = db.query(func.count(VoiceMessage.id)).filter(
             VoiceMessage.tenant_id == tenant_id
         ).scalar() or 0
 
-        # ==========================================
         # 6. Messages over time (last 14 days)
-        # ==========================================
         today = datetime.utcnow().date()
         fourteen_days_ago = today - timedelta(days=13)
 
