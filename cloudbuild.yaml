@@ -31,6 +31,5 @@ steps:
         '--allow-unauthenticated',
         '--port', '8080',
         '--update-secrets',
-        'ENV_FILE=TOGSTECBACKEND_ENV_FILE:latest',
-        'DATABASE_URL=NEON_DATABASE_URL:latest'
+        'ENV_FILE=TOGSTECBACKEND_ENV_FILE:latest'
       ]
