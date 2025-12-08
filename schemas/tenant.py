@@ -15,6 +15,11 @@ class FAQItem(BaseModel):
     answer: str
 
 
+class ServiceItem(BaseModel):
+    service: str
+    price: str
+
+
 class ChannelInput(BaseModel):
     type: str
     identifier: str
@@ -24,12 +29,12 @@ class TenantSetupRequest(BaseModel):
     business_name: str
     industry: str
     phone_number: str
-    website: str
     channels: List[ChannelInput]
     greeting_message: str
     tone_of_voice: str
     business_hours: BusinessHours
     faq: List[FAQItem]
+    services: List[ServiceItem]
 
 
 class TenantSetupResponse(BaseModel):

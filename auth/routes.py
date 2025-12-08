@@ -32,7 +32,6 @@ def signup(tenant_data: auth.TenantSignupRequest, db: Session = Depends(get_db))
     # Create new tenant
     new_tenant = Tenant(
         id=uuid.uuid4(),
-        owner_name=tenant_data.owner_name,
         business_name=tenant_data.business_name,
         email=tenant_data.email,
         hashed_password=hashed_password,

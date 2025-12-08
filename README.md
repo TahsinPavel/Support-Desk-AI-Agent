@@ -68,3 +68,5 @@ Key points:
 - alembic revision -m "migration_commit_message" (in the created file, write the migration code)
 - alembic upgrade head
 
+# Run Fast Api 
+- uvicorn main:app --reload       
