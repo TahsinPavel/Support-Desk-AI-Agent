@@ -12,7 +12,7 @@ steps:
         '.'
       ]
 
-  # Step 2: Push Docker image
+  # Step 2: Push Docker image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
@@ -20,21 +20,17 @@ steps:
         'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA'
       ]
 
-  # Step 3: Deploy to Cloud Run
+  # Step 3: Deploy to Cloud Run with the .env secret
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       [
-        'run',
-        'deploy',
-        'togstec-backend',
-        '--image',
-        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA',
-        '--region',
-        'us-central1',
-        '--platform',
-        'managed',
+        'run', 'deploy', 'togstec-backend',
+        '--image', 'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA',
+        '--region', 'us-central1',
+        '--platform', 'managed',
         '--allow-unauthenticated',
         '--port', '8080',
-        '--set-secrets',
+        '--update-secrets',
+        'ENV_FILE=TOGSTECBACKEND_ENV_FILE:latest',
         'DATABASE_URL=NEON_DATABASE_URL:latest'
       ]

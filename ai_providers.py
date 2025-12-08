@@ -9,7 +9,7 @@ from datetime import datetime
 from dateutil.parser import parse as date_parse
 import re
 
-load_dotenv()
+load_dotenv(dotenv_path=os.getenv("ENV_FILE", ".env"))
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
