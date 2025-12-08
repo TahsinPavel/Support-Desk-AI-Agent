@@ -1,4 +1,3 @@
-# cloudbuild.yaml for FastAPI backend deployment to Cloud Run
 options:
   logging: CLOUD_LOGGING_ONLY
 
@@ -9,16 +8,16 @@ steps:
       [
         'build',
         '-t',
-        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA',
-        '.'  # Dockerfile is in repo root
+        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA',
+        '.'
       ]
 
-  # Step 2: Push Docker image to Artifact Registry
+  # Step 2: Push Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args:
       [
         'push',
-        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA'
+        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA'
       ]
 
   # Step 3: Deploy to Cloud Run
@@ -29,7 +28,7 @@ steps:
         'deploy',
         'togstec-backend',
         '--image',
-        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend:$COMMIT_SHA',
+        'us-central1-docker.pkg.dev/togstec-ai/togstec-ai-backend/backend:$COMMIT_SHA',
         '--region',
         'us-central1',
         '--platform',
@@ -39,5 +38,4 @@ steps:
         '--set-secrets',
         'DATABASE_URL=projects/togstec-ai/secrets/NEON_DATABASE_URL:latest'
       ]
-
 
