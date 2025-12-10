@@ -16,4 +16,4 @@ ENV PORT=8080
 ENV ENV_FILE=/secrets/.env
 
 # Run uvicorn, load .env from ENV_FILE
-CMD ["sh", "-c", "python -m dotenv run -- uvicorn main:app --host 0.0.0.0 --port $PORT"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
