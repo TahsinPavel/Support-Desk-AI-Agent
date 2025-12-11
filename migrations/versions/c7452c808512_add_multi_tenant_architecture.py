@@ -11,7 +11,7 @@ import uuid
 
 # Replace with your previous migration ID
 revision = 'add_tenants_001'
-down_revision = None  # This is the first migration
+down_revision = '001_initial'  # This depends on the initial tables
 branch_labels = None
 depends_on = None
 

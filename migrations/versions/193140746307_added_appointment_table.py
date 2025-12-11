@@ -20,23 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade():
-    op.create_table(
-        'appointments',
-        sa.Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', UUID(as_uuid=True), sa.ForeignKey('tenants.id'), nullable=False),
-        sa.Column('channel_id', UUID(as_uuid=True), sa.ForeignKey('channels.id'), nullable=True),
-        sa.Column('customer_name', sa.String(255), nullable=True),
-        sa.Column('customer_contact', sa.String(255), nullable=True),
-        sa.Column('service', sa.String(255), nullable=True),
-        sa.Column('requested_time', sa.DateTime(), nullable=True),
-        sa.Column('confirmed_time', sa.DateTime(), nullable=True),
-        sa.Column('status', sa.String(50), nullable=False, server_default='pending'),
-        sa.Column('ai_conversation', sa.JSON, nullable=True),
-        sa.Column('notes', sa.Text, nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()'))
-    )
-
+    # appointments table already created by initial migration
+    # Just add the trigger for auto-updating updated_at
+    
     # Auto-update updated_at on row update
     op.execute("""
         CREATE OR REPLACE FUNCTION update_appointments_updated_at()
@@ -57,6 +43,6 @@ def upgrade():
 
 
 def downgrade():
+    # Just drop the trigger and function (table will be dropped by initial migration's downgrade)
     op.execute("DROP TRIGGER IF EXISTS trg_update_appointments_updated_at ON appointments")
     op.execute("DROP FUNCTION IF EXISTS update_appointments_updated_at()")
-    op.drop_table('appointments')

@@ -20,19 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade():
-    op.create_table(
-        'voice_messages',
-        sa.Column('id', UUID(as_uuid=True), primary_key=True, default=uuid.uuid4),
-        sa.Column('tenant_id', UUID(as_uuid=True), sa.ForeignKey('tenants.id'), nullable=False),
-        sa.Column('channel_id', UUID(as_uuid=True), sa.ForeignKey('channels.id'), nullable=False),
-        sa.Column('from_contact', sa.String(255), nullable=True),
-        sa.Column('transcription', sa.Text, nullable=True),
-        sa.Column('ai_response', sa.Text, nullable=True),
-        sa.Column('confidence_score', sa.Float, nullable=True),
-        sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
-        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()'))
-    )
-
+    # voice_messages table already created by initial migration
+    # Just add the trigger for auto-updating updated_at
+    
     # Auto-update updated_at on row update
     op.execute("""
         CREATE OR REPLACE FUNCTION update_voice_messages_updated_at()
@@ -53,6 +43,6 @@ def upgrade():
 
 
 def downgrade():
+    # Just drop the trigger and function (table will be dropped by initial migration's downgrade)
     op.execute("DROP TRIGGER IF EXISTS trg_update_voice_messages_updated_at ON voice_messages")
     op.execute("DROP FUNCTION IF EXISTS update_voice_messages_updated_at()")
-    op.drop_table('voice_messages')
