@@ -1,8 +1,23 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import os
 from routes import email, sms, chat, voice, voice_logs, analytics, appointments, subscription, tenant
 from auth import routes as auth_routes
 
 app = FastAPI()
+
+# Add CORS middleware
+# Use frontend URL from environment variable
+frontend_url = os.getenv("FRONTEND_URL")
+allowed_origins = [frontend_url]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include all routers with /api prefix
 app.include_router(auth_routes.router, prefix="/api/auth", tags=["Authentication"])

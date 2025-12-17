@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     # OpenAI
     OPENAI_API_KEY: Optional[str] = Field(None, env="OPENAI_API_KEY")
 
+    # Frontend url
+    FRONTEND_URL: Optional[str] = Field(None, env="FRONTEND_URL")
+
     # Gemini
     GEMINI_API_KEY: Optional[str] = Field(None, env="GEMINI_API_KEY")
 
@@ -28,7 +31,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # AI settings
-    DEFAULT_AI_PROVIDER: str = "openai"  # fallback
+    DEFAULT_AI_PROVIDER: str = "gemini"  # fallback
     MAX_CONVERSATION_TOKENS: int = 4000
 
     # Security
