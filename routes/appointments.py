@@ -48,7 +48,12 @@ def appointment_to_response(apt: Appointment) -> AppointmentResponse:
 def get_appointments(
     start_date: Optional[datetime] = Query(None, description="Filter from date"),
     end_date: Optional[datetime] = Query(None, description="Filter to date"),
-    status: Optional[str] = Query(None, pattern="^(pending|confirmed|completed|canceled)$"),
+    appointment_status: Optional[str] = Query(
+        None,
+        alias="status",
+        pattern="^(pending|confirmed|completed|canceled)$",
+        description="Filter by appointment status"
+    ),
     service: Optional[str] = Query(None),
     search: Optional[str] = Query(None, description="Search by customer name or contact"),
     current_tenant: Tenant = Depends(get_current_tenant),
@@ -67,8 +72,8 @@ def get_appointments(
             query = query.filter(Appointment.created_at >= start_date)
         if end_date:
             query = query.filter(Appointment.created_at <= end_date)
-        if status:
-            query = query.filter(Appointment.status == status)
+        if appointment_status:
+            query = query.filter(Appointment.status == appointment_status)
         if service:
             query = query.filter(Appointment.service.ilike(f"%{service}%"))
         if search:

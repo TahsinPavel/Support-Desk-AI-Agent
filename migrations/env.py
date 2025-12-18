@@ -23,11 +23,11 @@ def get_database_url():
     """Fetch DB URL from environment or fallback to alembic.ini."""
     env_url = os.getenv("DATABASE_URL")
     if env_url and env_url.strip() != "":
-        print(f"Using DATABASE_URL from environment: {env_url}")
+        print("Using DATABASE_URL from environment")
         return env_url
 
     ini_url = config.get_main_option("sqlalchemy.url")
-    print(f"Using sqlalchemy.url from alembic.ini: {ini_url}")
+    print("Using sqlalchemy.url from alembic.ini")
     return ini_url
 
 

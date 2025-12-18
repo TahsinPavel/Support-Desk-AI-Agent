@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from database import get_db
-from models import Tenant, VoiceMessage
+from models import Tenant, VoiceMessage, Channel
 from auth.dependencies import get_current_tenant
 from schemas.voice import VoiceLogResponse, VoiceLogListResponse
 from typing import List
@@ -28,9 +28,23 @@ def get_voice_logs(
         - 500: Database query failed
     """
     try:
-        # Query voice messages for this tenant
-        voice_messages = db.query(VoiceMessage).filter(
-            VoiceMessage.tenant_id == current_tenant.id
+        # IMPORTANT (multitenancy + schema):
+        # - Tenant ownership is determined via channels.tenant_id
+        # - voice_messages table in the DB does NOT have voice_messages.tenant_id
+        #   so we must avoid selecting the ORM entity (it would try to SELECT that column).
+        voice_messages = db.query(
+            VoiceMessage.id,
+            VoiceMessage.from_contact,
+            VoiceMessage.transcription,
+            VoiceMessage.ai_response,
+            VoiceMessage.confidence_score,
+            VoiceMessage.created_at,
+        ).join(
+            Channel,
+            VoiceMessage.channel_id == Channel.id,
+        ).filter(
+            Channel.tenant_id == current_tenant.id,
+            Channel.type == "voice",
         ).order_by(VoiceMessage.created_at.desc()).all()
 
         # Check if any logs exist
@@ -43,14 +57,14 @@ def get_voice_logs(
         # Convert to response format
         logs = [
             VoiceLogResponse(
-                id=msg.id,
-                from_contact=msg.from_contact,
-                transcription=msg.transcription,
-                ai_response=msg.ai_response,
-                confidence_score=msg.confidence_score,
-                created_at=msg.created_at
+                id=row[0],
+                from_contact=row[1],
+                transcription=row[2],
+                ai_response=row[3],
+                confidence_score=row[4],
+                created_at=row[5],
             )
-            for msg in voice_messages
+            for row in voice_messages
         ]
 
         return VoiceLogListResponse(logs=logs, total=len(logs))
