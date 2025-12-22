@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import json
 import logging
+from config import settings
 
 router = APIRouter()
 
@@ -145,6 +146,25 @@ async def paddle_webhook(
         # Get raw payload for signature verification
         payload = await request.body()
 
+        # Verify Paddle webhook signature (recommended in prod)
+        if settings.ENVIRONMENT.lower() == "production" and not PADDLE_WEBHOOK_SECRET:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="PADDLE_WEBHOOK_SECRET is required in production",
+            )
+
+        if PADDLE_WEBHOOK_SECRET and paddle_signature:
+            if not verify_paddle_signature(payload, paddle_signature, PADDLE_WEBHOOK_SECRET):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid Paddle webhook signature",
+                )
+        elif PADDLE_WEBHOOK_SECRET and not paddle_signature:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing Paddle-Signature header",
+            )
+
         # Parse JSON payload
         try:
             event_data = json.loads(payload)
@@ -168,6 +188,7 @@ async def paddle_webhook(
         # Also check nested custom_data for email
         custom_data = data.get("custom_data", {}) or {}
         tenant_email = custom_data.get("email")
+        plan_from_custom_data = custom_data.get("plan")
 
         # Find tenant by paddle_subscription_id or email
         tenant = None
@@ -193,6 +214,8 @@ async def paddle_webhook(
         if event_type == "subscription.created":
             if tenant:
                 tenant.subscription_status = "active"
+                if plan_from_custom_data:
+                    tenant.plan = plan_from_custom_data
                 if subscription_id:
                     tenant.paddle_subscription_id = subscription_id
                 if customer_id:
@@ -241,6 +264,8 @@ async def paddle_webhook(
             # Payment successful - ensure subscription is active
             if tenant:
                 tenant.subscription_status = "active"
+                if plan_from_custom_data:
+                    tenant.plan = plan_from_custom_data
                 tenant.updated_at = datetime.utcnow()
                 db.commit()
                 logger.info(f"Payment received for tenant {tenant.id}")

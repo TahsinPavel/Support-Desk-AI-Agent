@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     
     # Paddle
     PADDLE_WEBHOOK_SECRET: Optional[str] = Field(None, env="PADDLE_WEBHOOK_SECRET")
+    PADDLE_API_KEY: Optional[str] = Field(None, env="PADDLE_API_KEY")
+    PADDLE_ENVIRONMENT: Optional[str] = Field("sandbox", env="PADDLE_ENVIRONMENT")
+
+    # Paddle price ids (Billing)
+    PADDLE_STARTER_PRICE_ID: Optional[str] = Field(None, env="PADDLE_STARTER_PRICE_ID")
+    PADDLE_GROWTH_PRICE_ID: Optional[str] = Field(None, env="PADDLE_GROWTH_PRICE_ID")
+    PADDLE_ENTERPRISE_PRICE_ID: Optional[str] = Field(None, env="PADDLE_ENTERPRISE_PRICE_ID")
+
+    # Resend (email service for outgoing emails)
+    RESEND_API_KEY: Optional[str] = Field(None, env="RESEND_API_KEY")
 
     # Host config
     API_HOST: str = "0.0.0.0"

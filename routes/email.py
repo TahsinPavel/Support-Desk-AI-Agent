@@ -15,13 +15,13 @@ from ai_providers import get_ai_response
 import uuid
 from datetime import datetime
 from typing import Optional
-
+import resend
+import os
 router = APIRouter()
 
 
-# ==========================================
 # Utility: Get or Create Email Channel
-# ==========================================
+
 def get_or_create_email_channel(db: Session, tenant: Tenant) -> Channel:
     """
     Get existing email channel for tenant, or create one if it doesn't exist.
@@ -52,9 +52,8 @@ def get_or_create_email_channel(db: Session, tenant: Tenant) -> Channel:
     return channel
 
 
-# ==========================================
-# 1️⃣ GET /email/messages - Get all emails for tenant
-# ==========================================
+# GET /email/messages - Get all emails for tenant
+
 @router.get("/messages", response_model=EmailMessageListResponse)
 def get_email_messages(
     current_tenant: Tenant = Depends(get_current_tenant),
@@ -119,34 +118,46 @@ def get_email_messages(
         )
 
 
-# ==========================================
-# 2️⃣ POST /email/send - Send outgoing email
-# ==========================================
+
+# POST /email/send - Send outgoing email
+# we will automate send email like businessname@togstec.com later
 @router.post("/send", response_model=SendEmailResponse)
 def send_email(
     request: SendEmailRequest,
     current_tenant: Tenant = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
-    """
-    Send an outgoing email and store it in the database.
-    Auto-creates email channel if tenant doesn't have one.
-    """
     try:
-        # Get or create email channel for tenant
+        # 1. Get or create email channel (e.g., test@togstec.com)
         channel = get_or_create_email_channel(db, current_tenant)
 
-        # Store outgoing email in database
+        # 2. ACTUALLY SEND THE EMAIL VIA RESEND
+        # We do this BEFORE the DB commit to ensure it's actually sent
+        try:
+            params = {
+                "from": f"{current_tenant.name} <{channel.identifier}>", 
+                "to": [request.to_email],
+                "subject": request.subject,
+                "text": request.message,
+                # Setting reply_to ensures responses go back to your automation
+                "reply_to": channel.identifier 
+            }
+            resend_response = resend.Emails.send(params)
+        except Exception as e:
+            # If Resend fails (e.g. invalid API key), stop here
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Email provider error: {str(e)}"
+            )
+
+        # 3. Store the outgoing email in the database
         message = Message(
             id=uuid.uuid4(),
             tenant_id=current_tenant.id,
             channel_id=channel.id,
             direction="outgoing",
-            message_text=f"[Subject: {request.subject}]\n\n{request.message}",
-            ai_response=None,
-            confidence_score=None,
+            message_text=request.message, # Store clean text
             status="sent",
-            escalated_to_human=False,
             customer_contact=request.to_email,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -154,16 +165,6 @@ def send_email(
         db.add(message)
         db.commit()
         db.refresh(message)
-
-        # TODO: Integrate with actual SMTP provider (SendGrid, SES, etc.)
-        # For now, we just store the message without sending
-        # Example:
-        # smtp_service.send(
-        #     from_email=channel.identifier,
-        #     to_email=request.to_email,
-        #     subject=request.subject,
-        #     body=request.message
-        # )
 
         return SendEmailResponse(
             status="sent",
@@ -173,13 +174,13 @@ def send_email(
     except SQLAlchemyError:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database error: Failed to send email"
+            detail="Database error: Failed to record sent email"
         )
 
 
-# ==========================================
-# 3️⃣ POST /email/receive - Webhook for incoming emails
-# ==========================================
+
+# POST /email/receive - Webhook for incoming emails
+
 @router.post("/receive")
 async def receive_email(request: Request):
     """
