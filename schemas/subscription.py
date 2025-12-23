@@ -15,6 +15,12 @@ class ActivateSubscriptionRequest(BaseModel):
     plan: Literal["starter", "growth", "enterprise"] = Field("starter", description="Subscription plan")
 
 
+class DevConfirmPaymentRequest(BaseModel):
+    """Dev-only request body for simulating a successful payment."""
+
+    plan: Literal["starter", "growth", "enterprise"] = Field("starter", description="Plan to activate")
+
+
 # ==========================================
 # Response Models
 # ==========================================
@@ -25,6 +31,16 @@ class ActivateSubscriptionResponse(BaseModel):
     message: str
     tenant_id: str
     plan: str
+
+
+class DevConfirmPaymentResponse(BaseModel):
+    """Response after simulating payment confirmation."""
+
+    success: bool
+    message: str
+    tenant_id: str
+    plan: str
+    subscription_status: str
 
 
 class WebhookResponse(BaseModel):

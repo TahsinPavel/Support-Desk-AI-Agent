@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     PADDLE_GROWTH_PRICE_ID: Optional[str] = Field(None, env="PADDLE_GROWTH_PRICE_ID")
     PADDLE_ENTERPRISE_PRICE_ID: Optional[str] = Field(None, env="PADDLE_ENTERPRISE_PRICE_ID")
 
+    # Development-only payments
+    # Set `ALLOW_DEV_PAYMENT_CONFIRMATION=true` in development to allow a simulated
+    # "payment confirmed" API call from the frontend when Paddle is not configured.
+    ALLOW_DEV_PAYMENT_CONFIRMATION: bool = Field(False, env="ALLOW_DEV_PAYMENT_CONFIRMATION")
+
     # Resend (email service for outgoing emails)
     RESEND_API_KEY: Optional[str] = Field(None, env="RESEND_API_KEY")
 

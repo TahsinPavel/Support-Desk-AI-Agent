@@ -4,8 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
 import httpx
+from datetime import datetime
 
 from auth.dependencies import get_current_tenant
+from database import get_db
+from sqlalchemy.orm import Session
 from config import settings
 from schemas.pricing import PricingPlan, PricingPlansResponse, PlanKey
 from models import Tenant
@@ -66,14 +69,19 @@ class CreateCheckoutRequest(BaseModel):
 
 
 class CreateCheckoutResponse(BaseModel):
-    checkout_url: str
+    mode: Literal["paddle", "dev_confirmed"]
+    checkout_url: Optional[str] = None
     transaction_id: Optional[str] = None
+    subscription_status: Optional[str] = None
+    plan: Optional[PlanKey] = None
+    message: Optional[str] = None
 
 
 @router.post("/checkout", response_model=CreateCheckoutResponse)
 async def create_checkout(
     body: CreateCheckoutRequest,
     current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db),
 ) -> CreateCheckoutResponse:
     """Creates a Paddle hosted checkout link for the selected plan.
 
@@ -91,16 +99,38 @@ async def create_checkout(
             detail="Plan is not currently available",
         )
 
-    if not plan.paddle_price_id:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Paddle price id is not configured for this plan",
-        )
+    paddle_ready = bool(plan.paddle_price_id and settings.PADDLE_API_KEY)
 
-    if not settings.PADDLE_API_KEY:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="PADDLE_API_KEY is not configured",
+    # Development fallback: if Paddle isn't configured yet, simulate successful payment.
+    if not paddle_ready:
+        if (settings.ENVIRONMENT or "").lower() == "production" or not settings.ALLOW_DEV_PAYMENT_CONFIRMATION:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "message": "Payments are not configured",
+                    "missing": {
+                        "paddle_price_id": bool(plan.paddle_price_id),
+                        "PADDLE_API_KEY": bool(settings.PADDLE_API_KEY),
+                    },
+                },
+            )
+
+        # Mark the current tenant as active on the selected plan.
+        current_tenant.plan = plan.key
+        current_tenant.subscription_status = "active"
+        current_tenant.updated_at = datetime.utcnow()
+
+        db.add(current_tenant)
+        db.commit()
+        db.refresh(current_tenant)
+
+        return CreateCheckoutResponse(
+            mode="dev_confirmed",
+            checkout_url=None,
+            transaction_id=None,
+            subscription_status=current_tenant.subscription_status,
+            plan=plan.key,
+            message="Payment confirmed (dev)",
         )
 
     frontend_url = settings.FRONTEND_URL or ""
@@ -159,4 +189,10 @@ async def create_checkout(
             detail={"message": "Paddle response missing checkout URL", "response": data},
         )
 
-    return CreateCheckoutResponse(checkout_url=checkout_url, transaction_id=transaction_id)
+    return CreateCheckoutResponse(
+        mode="paddle",
+        checkout_url=checkout_url,
+        transaction_id=transaction_id,
+        plan=plan.key,
+        message="Checkout created",
+    )

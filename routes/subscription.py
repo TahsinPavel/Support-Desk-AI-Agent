@@ -6,6 +6,8 @@ from models import Tenant
 from schemas.subscription import (
     ActivateSubscriptionRequest,
     ActivateSubscriptionResponse,
+    DevConfirmPaymentRequest,
+    DevConfirmPaymentResponse,
     WebhookResponse
 )
 from datetime import datetime
@@ -15,6 +17,7 @@ import hmac
 import json
 import logging
 from config import settings
+from auth.dependencies import get_current_tenant
 
 router = APIRouter()
 
@@ -126,6 +129,54 @@ def activate_subscription(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database error: Failed to activate subscription"
+        )
+
+
+# ==========================================
+# Dev-only: POST /subscription/dev/confirm
+# ==========================================
+@router.post("/dev/confirm", response_model=DevConfirmPaymentResponse)
+def dev_confirm_payment(
+    body: DevConfirmPaymentRequest,
+    current_tenant: Tenant = Depends(get_current_tenant),
+    db: Session = Depends(get_db),
+):
+    """Development-only endpoint to simulate payment confirmation.
+
+    Use this while Paddle price IDs / business verification are pending.
+    Disabled by default; enable with `ALLOW_DEV_PAYMENT_CONFIRMATION=true`.
+    """
+
+    if (settings.ENVIRONMENT or "").lower() == "production" or not settings.ALLOW_DEV_PAYMENT_CONFIRMATION:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Dev payment confirmation is disabled",
+        )
+
+    try:
+        current_tenant.plan = body.plan
+        current_tenant.subscription_status = "active"
+        current_tenant.updated_at = datetime.utcnow()
+
+        db.add(current_tenant)
+        db.commit()
+        db.refresh(current_tenant)
+
+        logger.info(f"Dev payment confirmed for tenant {current_tenant.id} - Plan: {body.plan}")
+
+        return DevConfirmPaymentResponse(
+            success=True,
+            message="Payment confirmed (dev)",
+            tenant_id=str(current_tenant.id),
+            plan=current_tenant.plan,
+            subscription_status=current_tenant.subscription_status,
+        )
+    except SQLAlchemyError as e:
+        db.rollback()
+        logger.error(f"Database error confirming dev payment: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database error: Failed to confirm payment",
         )
 
 
