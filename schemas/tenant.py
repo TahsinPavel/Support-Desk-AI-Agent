@@ -32,6 +32,7 @@ class TenantSetupRequest(BaseModel):
     greeting_message: str
     tone_of_voice: str
     business_hours: BusinessHours
+    onboarding_completed: bool = True
     faq: List[FAQItem]
     services: List[ServiceItem]
 
