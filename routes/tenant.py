@@ -168,6 +168,9 @@ def setup_tenant(
 
         _set_if_changed(current_tenant, "primary_phone", setup_data.phone_number, "primary_phone")
 
+        # Mark onboarding completed once setup is submitted successfully
+        _set_if_changed(current_tenant, "onboarding_completed", True, "onboarding_completed")
+
         # Business hours
         bh = setup_data.business_hours
         _set_if_changed(current_tenant, "timezone", bh.timezone, "timezone")

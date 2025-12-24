@@ -25,6 +25,7 @@ class TenantResponse(BaseModel):
     timezone: str
     plan: str
     subscription_status: str
+    onboarding_completed: bool
     is_active: bool
     created_at: datetime
 
