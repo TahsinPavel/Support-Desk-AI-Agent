@@ -39,7 +39,9 @@ def get_ai_response(
     Multi-tenant ready: accepts tenant-specific system_prompt, model, and temperature.
     """
     try:
-        if ai_provider.lower() == "openai":
+        provider = (ai_provider or "gemini").lower()
+
+        if provider == "openai":
             if not model:
                 model = "gpt-4o-mini"  # default OpenAI model
 
@@ -54,7 +56,7 @@ def get_ai_response(
             reply = response.choices[0].message.content
             confidence = 0.9  # placeholder, can be replaced with scoring logic
 
-        elif ai_provider.lower() == "gemini":
+        elif provider == "gemini":
             if not model:
                 model = "gemini-2.5-flash"
 

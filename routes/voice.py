@@ -45,8 +45,8 @@ async def voice_webhook(request: Request):
     # Process user speech with AI
     ai_reply, confidence = get_ai_response(
         message_text=speech_text,
-        ai_provider=tenant.ai_provider,
-        system_prompt=tenant.ai_system_prompt,
+        ai_provider=tenant.ai_provider or "gemini",
+        system_prompt=tenant.ai_system_prompt or "",
         model=getattr(tenant, "ai_model", None),
         temperature=getattr(tenant, "ai_temperature", None)
     )

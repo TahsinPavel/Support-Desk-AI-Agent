@@ -208,7 +208,7 @@ async def receive_email(request: Request):
         # Get AI response
         ai_reply, confidence = get_ai_response(
             message_text=message_text,
-            ai_provider=tenant.ai_provider or "openai",
+            ai_provider=tenant.ai_provider or "gemini",
             system_prompt=tenant.ai_system_prompt or "",
             model=getattr(tenant, "ai_model", None),
             temperature=getattr(tenant, "ai_temperature", 0.7)

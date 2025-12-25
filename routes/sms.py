@@ -226,7 +226,7 @@ async def receive_sms(request: Request):
         # --- NO appointment detected → Regular AI response ---
         ai_reply, confidence = get_ai_response(
             message_text=message_text,
-            ai_provider=tenant.ai_provider or "openai",
+            ai_provider=tenant.ai_provider or "gemini",
             system_prompt=tenant.ai_system_prompt or ""
         )
 

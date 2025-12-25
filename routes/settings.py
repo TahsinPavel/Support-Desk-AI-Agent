@@ -21,7 +21,7 @@ def _build_settings_response(db: Session, tenant: Tenant) -> TenantSettingsRespo
         timezone=tenant.timezone,
         open_time=tenant.open_time,
         close_time=tenant.close_time,
-        ai_provider=tenant.ai_provider or "openai",
+        ai_provider=tenant.ai_provider or "gemini",
         ai_system_prompt=tenant.ai_system_prompt,
         escalation_phone=tenant.escalation_phone,
         plan=tenant.plan,

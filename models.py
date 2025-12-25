@@ -27,7 +27,7 @@ class Tenant(Base):
     close_time = Column(String(10), nullable=True)
 
     # AI settings
-    ai_provider = Column(String(50), default="openai")
+    ai_provider = Column(String(50), default="gemini")
     ai_system_prompt = Column(Text, nullable=True)
     faqs = Column(JSON, nullable=True)
     services = Column(JSON, nullable=True)
