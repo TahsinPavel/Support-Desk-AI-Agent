@@ -19,6 +19,10 @@ class Tenant(Base):
     email = Column(String(255), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
 
+    # Auth provider (local / google)
+    auth_provider = Column(String(50), default="local", nullable=False)
+    google_sub = Column(String(255), unique=True, index=True, nullable=True)
+
     # Business info
     business_name = Column(String(255), nullable=False)
     primary_phone = Column(String(50), nullable=True, unique=True)

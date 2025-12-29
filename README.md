@@ -70,3 +70,22 @@ Key points:
 
 # Run Fast Api 
 - uvicorn main:app --reload       
+
+---
+
+## Google Signup/Login (OAuth)
+
+Set these environment variables:
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET` (required only for the redirect-based code exchange flow)
+- `FRONTEND_URL` (for CORS)
+
+Backend endpoints:
+
+- `GET /api/auth/google/authorize?redirect_uri=...`
+- `POST /api/auth/google/exchange`
+
+Secretless alternative (Google Identity Services):
+
+- `POST /api/auth/google/credential` (send the Google ID token as `credential`)

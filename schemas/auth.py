@@ -38,3 +38,24 @@ class TokenResponse(BaseModel):
     token_type: str
     refresh_token: Optional[str] = None
     tenant: TenantResponse
+
+
+class GoogleAuthorizeResponse(BaseModel):
+    authorization_url: str
+    state: str
+
+
+class GoogleExchangeRequest(BaseModel):
+    code: str
+    state: str
+    redirect_uri: str
+    business_name: Optional[str] = None
+    primary_phone: Optional[str] = None
+    timezone: Optional[str] = "UTC"
+
+
+class GoogleCredentialRequest(BaseModel):
+    credential: str
+    business_name: Optional[str] = None
+    primary_phone: Optional[str] = None
+    timezone: Optional[str] = "UTC"

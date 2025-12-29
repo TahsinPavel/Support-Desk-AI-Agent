@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     # Frontend url
     FRONTEND_URL: Optional[str] = Field(None, env="FRONTEND_URL")
 
+    # Google OAuth
+    GOOGLE_CLIENT_ID: Optional[str] = Field(None, env="GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET: Optional[str] = Field(None, env="GOOGLE_CLIENT_SECRET")
+
     # Gemini
     GEMINI_API_KEY: Optional[str] = Field(None, env="GEMINI_API_KEY")
 
