@@ -5,9 +5,9 @@ import uuid
 
 
 class TenantSignupRequest(BaseModel):
-    business_name: str
     email: str
     password: str
+    business_name: Optional[str] = None
     primary_phone: Optional[str] = None
     timezone: Optional[str] = "UTC"
 

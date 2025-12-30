@@ -166,6 +166,9 @@ def setup_tenant(
                     setattr(obj, attr_name, new_value)
                     updated_fields[friendly_name] = new_value
 
+        # Business identity
+        _set_if_changed(current_tenant, "business_name", setup_data.business_name, "business_name")
+
         _set_if_changed(current_tenant, "primary_phone", setup_data.phone_number, "primary_phone")
 
         # Mark onboarding based on frontend payload
@@ -198,7 +201,7 @@ def setup_tenant(
 
         # Generate AI system prompt
         ai_prompt = generate_ai_system_prompt(
-            business_name=current_tenant.business_name,
+            business_name=setup_data.business_name,
             industry=setup_data.industry,
             tone_of_voice=setup_data.tone_of_voice,
             greeting_message=setup_data.greeting_message,

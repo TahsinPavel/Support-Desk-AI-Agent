@@ -179,11 +179,16 @@ def signup(tenant_data: auth.TenantSignupRequest, db: Session = Depends(get_db))
     
     # Hash the password
     hashed_password = security.hash_password(tenant_data.password)
+
+    # business_name is required in DB, but the signup payload may omit it.
+    # Derive a reasonable placeholder from email when not provided.
+    derived_business_name = (tenant_data.email.split("@", 1)[0] or "New Tenant").strip()
+    final_business_name = (tenant_data.business_name or "").strip() or derived_business_name
     
     # Create new tenant
     new_tenant = Tenant(
         id=uuid.uuid4(),
-        business_name=tenant_data.business_name,
+        business_name=final_business_name,
         email=tenant_data.email,
         hashed_password=hashed_password,
         auth_provider="local",

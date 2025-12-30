@@ -27,6 +27,7 @@ class ChannelInput(BaseModel):
 
 class TenantSetupRequest(BaseModel):
     industry: str
+    business_name: str
     phone_number: str
     channels: List[ChannelInput]
     greeting_message: str
