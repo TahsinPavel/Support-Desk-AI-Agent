@@ -1,6 +1,6 @@
 # config.py
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, field_validator
 from typing import Optional
 
 
@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     # Twilio (for outgoing actions if needed)
     TWILIO_ACCOUNT_SID: Optional[str] = Field(None, env="TWILIO_ACCOUNT_SID")
     TWILIO_AUTH_TOKEN: Optional[str] = Field(None, env="TWILIO_AUTH_TOKEN")
-    #TWILIO_PHONE_NUMBER: Optional[str] = Field(None, env="TWILIO_PHONE_NUMBER")
+
+    # Public base URL Twilio should call for webhooks (e.g. https://api.yourdomain.com)
+    PUBLIC_WEBHOOK_BASE_URL: Optional[str] = Field(None, env="PUBLIC_WEBHOOK_BASE_URL")
     
     # Paddle
     PADDLE_WEBHOOK_SECRET: Optional[str] = Field(None, env="PADDLE_WEBHOOK_SECRET")
@@ -55,6 +57,13 @@ class Settings(BaseSettings):
 
     # Security
     REQUIRE_TWILIO_VALIDATION: bool = True
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def _strip_strings(cls, v):
+        if isinstance(v, str):
+            return v.strip()
+        return v
 
     class Config:
         env_file = ".env"

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from routes import email, sms, chat, voice, voice_logs, analytics, appointments, subscription, tenant, pricing, settings as settings_routes, scraper
+from routes import email, sms, chat, voice, voice_logs, analytics, appointments, subscription, tenant, pricing, settings as settings_routes, scraper, twilio as twilio_routes
 from auth import routes as auth_routes
 
 app = FastAPI()
@@ -34,6 +34,7 @@ app.include_router(subscription.router, prefix="/api/subscription", tags=["Subsc
 app.include_router(tenant.router, prefix="/api/tenant", tags=["Tenant"])
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 app.include_router(scraper.router, prefix="/api/scraper", tags=["Scraper"])
+app.include_router(twilio_routes.router, prefix="/api/twilio", tags=["Twilio"])
 
 @app.get("/")
 def home():
