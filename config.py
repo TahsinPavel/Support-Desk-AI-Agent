@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     # Resend (email service for outgoing emails)
     RESEND_API_KEY: Optional[str] = Field(None, env="RESEND_API_KEY")
 
+    # Meta WhatsApp Cloud API
+    META_WHATSAPP_VERIFY_TOKEN: Optional[str] = Field(None, env="META_WHATSAPP_VERIFY_TOKEN")
+    META_WHATSAPP_ACCESS_TOKEN: Optional[str] = Field(None, env="META_WHATSAPP_ACCESS_TOKEN")
+    META_APP_SECRET: Optional[str] = Field(None, env="META_APP_SECRET")
+    META_GRAPH_API_VERSION: str = Field("v19.0", env="META_GRAPH_API_VERSION")
+
     # Host config
     API_HOST: str = "0.0.0.0"
     API_PORT: int = 8000

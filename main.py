@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from routes import email, sms, chat, voice, voice_logs, analytics, appointments, subscription, tenant, pricing, settings as settings_routes, scraper, twilio as twilio_routes
+from routes import email, sms, voice, voice_logs, analytics, appointments, subscription, tenant, pricing, settings as settings_routes, scraper, twilio as twilio_routes, whatsapp
 from auth import routes as auth_routes
 
 app = FastAPI()
@@ -23,7 +23,6 @@ app.add_middleware(
 app.include_router(auth_routes.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(email.router, prefix="/api/email", tags=["Email"])
 app.include_router(sms.router, prefix="/api/sms", tags=["SMS"])
-app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(voice.router, prefix="/api/voice", tags=["Voice"])
 app.include_router(voice_logs.router, prefix="/api/voice_logs", tags=["Voice Logs"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
@@ -35,6 +34,7 @@ app.include_router(tenant.router, prefix="/api/tenant", tags=["Tenant"])
 app.include_router(pricing.router, prefix="/api/pricing", tags=["Pricing"])
 app.include_router(scraper.router, prefix="/api/scraper", tags=["Scraper"])
 app.include_router(twilio_routes.router, prefix="/api/twilio", tags=["Twilio"])
+app.include_router(whatsapp.router, prefix="/api/whatsapp", tags=["WhatsApp"])
 
 @app.get("/")
 def home():
