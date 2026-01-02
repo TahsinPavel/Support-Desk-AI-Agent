@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from database import get_db
@@ -7,6 +7,9 @@ from auth.dependencies import get_current_tenant
 from schemas.tenant import TenantSetupRequest, TenantSetupResponse
 from typing import List, Dict
 import json
+
+from config import settings
+from services.twilio_numbers import ensure_incoming_number_with_webhooks, get_twilio_client
 
 router = APIRouter(tags=["Tenant"])
 
@@ -147,6 +150,7 @@ Always ensure the conversation flows naturally while guiding the customer toward
 @router.post("/setup", response_model=TenantSetupResponse)
 def setup_tenant(
     setup_data: TenantSetupRequest,
+    request: Request,
     current_tenant: Tenant = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
@@ -170,6 +174,18 @@ def setup_tenant(
         _set_if_changed(current_tenant, "business_name", setup_data.business_name, "business_name")
 
         _set_if_changed(current_tenant, "primary_phone", setup_data.phone_number, "primary_phone")
+
+        # Purchase the selected Twilio number and configure both SMS + Voice webhooks.
+        # The same number will be used for both SMS and phone (voice).
+        public_base_url = settings.PUBLIC_WEBHOOK_BASE_URL or str(request.base_url)
+        incoming_sid, sms_url, voice_url = ensure_incoming_number_with_webhooks(
+            client=get_twilio_client(),
+            phone_number=setup_data.phone_number,
+            public_base_url=public_base_url,
+        )
+        updated_fields["twilio_incoming_phone_number_sid"] = incoming_sid
+        updated_fields["twilio_sms_webhook_url"] = sms_url
+        updated_fields["twilio_voice_webhook_url"] = voice_url
 
         # Mark onboarding based on frontend payload
         _set_if_changed(
@@ -223,18 +239,45 @@ def setup_tenant(
 
         # Insert Channel Records (avoid duplicates)
         created_channels = []
+        ensured_types = set()
+
         for channel_input in setup_data.channels:
+            # Force the selected number to be used for both SMS and Voice
+            identifier = channel_input.identifier
+            if channel_input.type in {"sms", "voice"}:
+                identifier = setup_data.phone_number
+                ensured_types.add(channel_input.type)
+
             existing_channel = db.query(Channel).filter(
                 Channel.tenant_id == current_tenant.id,
                 Channel.type == channel_input.type,
-                Channel.identifier == channel_input.identifier
+                Channel.identifier == identifier
             ).first()
 
             if not existing_channel:
                 new_channel = Channel(
                     tenant_id=current_tenant.id,
                     type=channel_input.type,
-                    identifier=channel_input.identifier
+                    identifier=identifier
+                )
+                db.add(new_channel)
+                created_channels.append(new_channel)
+
+        # Ensure both SMS + Voice channels exist even if the frontend did not include them.
+        for required_type in ("sms", "voice"):
+            if required_type in ensured_types:
+                continue
+
+            existing_channel = db.query(Channel).filter(
+                Channel.tenant_id == current_tenant.id,
+                Channel.type == required_type,
+                Channel.identifier == setup_data.phone_number,
+            ).first()
+            if not existing_channel:
+                new_channel = Channel(
+                    tenant_id=current_tenant.id,
+                    type=required_type,
+                    identifier=setup_data.phone_number,
                 )
                 db.add(new_channel)
                 created_channels.append(new_channel)

@@ -3,13 +3,9 @@ from twilio.rest import Client
 from twilio.base.exceptions import TwilioException, TwilioRestException
 from typing import Any, Dict, List, Optional
 
-from sqlalchemy.orm import Session
-
 from auth.dependencies import get_current_tenant
-from database import get_db
-from models import Channel, Tenant
+from models import Tenant
 from config import settings
-from schemas.twilio import PurchaseTwilioNumberRequest, PurchaseTwilioNumberResponse
 
 router = APIRouter()
 
@@ -173,110 +169,6 @@ def get_available_numbers(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Twilio error: {message}",
         )
-
-
-@router.post("/purchase-number", response_model=PurchaseTwilioNumberResponse)
-def purchase_number(
-    payload: PurchaseTwilioNumberRequest,
-    request: Request,
-    current_tenant: Tenant = Depends(get_current_tenant),
-    db: Session = Depends(get_db),
-):
-    """Purchase a Twilio phone number and configure SMS + Voice webhooks.
-
-    Also creates `Channel` rows for the tenant:
-    - type=sms, identifier=<phone_number>
-    - type=voice, identifier=<phone_number>
-    """
-
-    client = _get_twilio_client()
-
-    # Prefer explicit payload value, else env, else request base URL.
-    raw_base = payload.webhook_base_url or settings.PUBLIC_WEBHOOK_BASE_URL or str(request.base_url)
-    try:
-        public_base_url = _normalize_public_base_url(raw_base)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-    sms_url = f"{public_base_url}/api/sms/receive"
-    voice_url = f"{public_base_url}/api/voice/receive"
-
-    try:
-        incoming = client.incoming_phone_numbers.create(
-            phone_number=payload.phone_number,
-            sms_url=sms_url,
-            sms_method="POST",
-            voice_url=voice_url,
-            voice_method="POST",
-        )
-
-        # Defensive: ensure both webhooks are set even if Twilio partially applied create params.
-        client.incoming_phone_numbers(incoming.sid).update(
-            sms_url=sms_url,
-            sms_method="POST",
-            voice_url=voice_url,
-            voice_method="POST",
-        )
-    except TwilioRestException as e:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Twilio error purchasing number: {getattr(e, 'msg', str(e))}",
-        )
-
-    created_sms_channel = False
-    created_voice_channel = False
-
-    # Create SMS channel if missing
-    existing_sms = (
-        db.query(Channel)
-        .filter(
-            Channel.tenant_id == current_tenant.id,
-            Channel.type == "sms",
-            Channel.identifier == payload.phone_number,
-        )
-        .first()
-    )
-    if not existing_sms:
-        db.add(
-            Channel(
-                tenant_id=current_tenant.id,
-                type="sms",
-                identifier=payload.phone_number,
-            )
-        )
-        created_sms_channel = True
-
-    # Create Voice channel if missing
-    existing_voice = (
-        db.query(Channel)
-        .filter(
-            Channel.tenant_id == current_tenant.id,
-            Channel.type == "voice",
-            Channel.identifier == payload.phone_number,
-        )
-        .first()
-    )
-    if not existing_voice:
-        db.add(
-            Channel(
-                tenant_id=current_tenant.id,
-                type="voice",
-                identifier=payload.phone_number,
-            )
-        )
-        created_voice_channel = True
-
-    db.commit()
-
-    return PurchaseTwilioNumberResponse(
-        success=True,
-        phone_number=payload.phone_number,
-        incoming_phone_number_sid=incoming.sid,
-        sms_url=sms_url,
-        voice_url=voice_url,
-        created_sms_channel=created_sms_channel,
-        created_voice_channel=created_voice_channel,
-    )
 
 
 @router.get("/locations")
